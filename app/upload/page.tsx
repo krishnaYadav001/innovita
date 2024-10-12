@@ -1,14 +1,17 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UploadError } from "../Types";
 import UploadLayout from "../layouts/UploadLayout";
 import { BiLoaderCircle, BiSolidCloudUpload } from "react-icons/bi";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import { PiKnifeLight } from "react-icons/pi";
+import { useUser } from "../context/user";
+import useCreatePost from "../hooks/useCreatePost";
 
 export default function Upload(){
+    const contextUser = useUser()
     const router = useRouter()
 
     let [fileDisplay, setFileDisplay] = useState<string>('');
@@ -16,6 +19,10 @@ export default function Upload(){
     let [file, setFile] = useState<File | null>(null);
     let [error, setError] = useState<UploadError | null>(null);
     let [isUploading, setIsUpLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        if(!contextUser?.user) router.push('/')
+    }, [contextUser])
 
     const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -39,13 +46,39 @@ export default function Upload(){
         setFile(null)
     }
 
-    const createNewPost = () => {
-        console.log('createNewPost')
+    const validate = () => {
+        setError(null)
+        let isError = false
+        if(!file){
+            setError({type: 'File', message: 'A video is required'})
+            isError = true
+        }else if(!caption){
+            setError({ type: 'caption', message: 'A caption is required'})
+            isError = true
+        }
+        return isError
+    }
+
+    const createNewPost = async() => {
+        let isError = validate()
+        if (isError) return
+        if (!file || !contextUser?.user) return 
+        setIsUpLoading(true)
+
+        try{
+            await useCreatePost(file,contextUser?.user?.id, caption)
+            router.push(`/profile/${contextUser?.user?.id}`)
+            setIsUpLoading(false)
+        }catch (error)
+        {
+            console.log(error)
+            setIsUpLoading(false)
+            alert(error)
+        }
     }
 
     return (
         <>
-            
             <UploadLayout>
                 <div className="w-full mt-[80px] mb-[40px] bg-white shadow-lg rounded-md py-6 md:px-10 px-4">
                     <div>
@@ -100,7 +133,7 @@ export default function Upload(){
                                 <img 
                                     className="absolute right-4 bottom-6 z-20"
                                     width = "90"
-                                    src="/images/tiktok-logo-white.png" 
+                                    src="/images/ii.png" 
                                 />
 
                                 <video 

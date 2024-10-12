@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-import AuthOverlay from "./components/AuthOverlay";
+import UserProvider from "./context/user";
+import AllOverLays from "./components/AllOverLays";
 
 
 
@@ -10,17 +10,15 @@ export const metadata: Metadata = {
   description: "innovita",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children } : { children: React.ReactNode }){
   return (
     <html lang="en">
-      <body>
-        <AuthOverlay />
-        {children}
-      </body>
+      <UserProvider>
+        <body>
+          <AllOverLays />
+          {children}
+        </body>
+      </UserProvider>
     </html>
   );
 }
